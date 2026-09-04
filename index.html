@@ -136,16 +136,6 @@
   }
   .field textarea{resize:vertical;min-height:90px;}
   .field-hint{font-size:0.82rem;color:var(--ink-soft);margin-top:6px;}
-  .loc-suggestions{
-    position:absolute; top:100%; left:0; right:0; z-index:20;
-    background:var(--paper); border:1.5px solid var(--line); border-top:none;
-    border-radius:0 0 6px 6px; max-height:220px; overflow-y:auto;
-    box-shadow:0 8px 20px rgba(16,38,43,0.12);
-  }
-  .loc-suggestion{padding:10px 14px; font-size:0.92rem; cursor:pointer;}
-  .loc-suggestion:hover, .loc-suggestion.active{background:rgba(16,38,43,0.06);}
-  .loc-suggestion + .loc-suggestion{border-top:1px solid var(--line);}
-  .loc-suggestion-empty{padding:10px 14px; font-size:0.88rem; color:var(--ink-soft);}
   .severity-options{display:flex;gap:10px;flex-wrap:wrap;}
   .sev-btn{flex:1;min-width:120px;padding:12px;border-radius:6px;border:1.5px solid var(--line);text-align:center;font-weight:600;font-size:0.9rem;cursor:pointer;background:var(--paper);}
   .sev-btn[data-active="true"].sev-safe{border-color:var(--safe);background:rgba(63,122,93,0.12);}
@@ -308,11 +298,10 @@
       <p>Your update could help someone get home safely. This demo saves your report locally in your browser — nothing is sent to a live server.</p>
     </div>
     <form id="reportForm">
-      <div class="field" style="position:relative;">
+      <div class="field">
         <label for="loc">Barangay / location</label>
-        <input type="text" id="loc" placeholder="e.g. Barangay Malanday, Marikina City" autocomplete="off" required>
-        <div id="locSuggestions" class="loc-suggestions" hidden></div>
-        <p class="field-hint">Start typing and pick your location from the list to keep it accurate.</p>
+        <input type="text" id="loc" placeholder="e.g. Barangay Malanday, Marikina City" required>
+        <p class="field-hint">Type your barangay or nearest landmark.</p>
       </div>
       <div class="field">
         <label>Flood level</label>
@@ -559,61 +548,6 @@
     });
   });
 
-  // ---------- Location autocomplete ----------
-  var locInput = document.getElementById('loc');
-  var locSuggestions = document.getElementById('locSuggestions');
-  var selectedPlace = null; // {lat, lng, displayLoc, area}
-  var locDebounceTimer = null;
-
-  function hideSuggestions(){
-    locSuggestions.hidden = true;
-    locSuggestions.innerHTML = '';
-  }
-
-  function renderSuggestions(results){
-    locSuggestions.innerHTML = '';
-    if(!results || results.length === 0){
-      var empty = document.createElement('div');
-      empty.className = 'loc-suggestion-empty';
-      empty.textContent = 'No matching places found — try a nearby landmark or city.';
-      locSuggestions.appendChild(empty);
-      locSuggestions.hidden = false;
-      return;
-    }
-    results.forEach(function(r){
-      var item = document.createElement('div');
-      item.className = 'loc-suggestion';
-      item.textContent = r.display_name;
-      item.addEventListener('click', function(){
-        var lat = parseFloat(r.lat);
-        var lng = parseFloat(r.lon);
-        var displayLoc = getDisplayLoc(r.address, r.display_name);
-        var area = getBroadArea(r.address, displayLoc);
-        selectedPlace = { lat: lat, lng: lng, displayLoc: displayLoc, area: area };
-        locInput.value = displayLoc;
-        hideSuggestions();
-      });
-      locSuggestions.appendChild(item);
-    });
-    locSuggestions.hidden = false;
-  }
-
-  locInput.addEventListener('input', function(){
-    selectedPlace = null; // typing again invalidates any previous pick
-    var text = locInput.value.trim();
-    clearTimeout(locDebounceTimer);
-    if(text.length < 3){ hideSuggestions(); return; }
-    locDebounceTimer = setTimeout(function(){
-      searchPlaces(text).then(renderSuggestions);
-    }, 350);
-  });
-
-  document.addEventListener('click', function(e){
-    if(!locSuggestions.contains(e.target) && e.target !== locInput){
-      hideSuggestions();
-    }
-  });
-
   var fileDrop = document.getElementById('fileDrop');
   var fileInput = document.getElementById('fileInput');
   fileDrop.addEventListener('click', function(){ fileInput.click(); });
@@ -641,19 +575,16 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Locating…';
 
-    // Prefer the place they clicked from the dropdown. If they typed but never picked
-    // a suggestion, do a one-off lookup so we still get a clean, correctly-formatted place.
-    var placePromise = selectedPlace
-      ? Promise.resolve(selectedPlace)
-      : searchPlaces(typedLoc).then(function(results){
-          if(results && results.length > 0){
-            var r = results[0];
-            var displayLoc = getDisplayLoc(r.address, r.display_name);
-            var area = getBroadArea(r.address, displayLoc);
-            return { lat: parseFloat(r.lat), lng: parseFloat(r.lon), displayLoc: displayLoc, area: area, matched: true };
-          }
-          return { lat: 14.615, lng: 121.06, displayLoc: typedLoc, area: typedLoc, matched: false };
-        });
+    // Look up what they typed to get real coordinates and a clean, correctly-formatted place name.
+    var placePromise = searchPlaces(typedLoc).then(function(results){
+      if(results && results.length > 0){
+        var r = results[0];
+        var displayLoc = getDisplayLoc(r.address, r.display_name);
+        var area = getBroadArea(r.address, displayLoc);
+        return { lat: parseFloat(r.lat), lng: parseFloat(r.lon), displayLoc: displayLoc, area: area, matched: true };
+      }
+      return { lat: 14.615, lng: 121.06, displayLoc: typedLoc, area: typedLoc, matched: false };
+    });
 
     placePromise.then(function(place){
       if(!reportsCollection || !window.__firestoreAddDoc){
@@ -673,8 +604,6 @@
       }).then(function(){ return place; });
     }).then(function(place){
       document.getElementById('reportForm').reset();
-      selectedPlace = null;
-      hideSuggestions();
       fileDrop.textContent = 'Tap to attach a photo — preview only in this demo';
       fileDrop.classList.remove('has-file');
       document.querySelectorAll('.sev-btn').forEach(function(b){ b.removeAttribute('data-active'); });
