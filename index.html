@@ -200,7 +200,7 @@
           <span class="time" id="heroTime">Live</span>
         </div>
         <div class="gauge-bands" id="updatesList">
-          <div class="band-row band-safe"><span>Loading recent reports…</span><span class="tag">—</span></div>
+          <div class="band-row band-safe"><span>No reports yet</span><span class="tag">Be the first to submit one</span></div>
         </div>
         <p class="gauge-fill-note" id="heroNote">Community reports checked against weather and location data.</p>
       </div>
@@ -386,20 +386,13 @@
   }
   initFirebase();
 
-  // ---------- Sample seed reports (old + recent, for demo) ----------
-  var SEED_REPORTS = [
-    {id:'s1', loc:'Barangay San Isidro, Marikina City', lat:14.6357, lng:121.1029, level:'danger', desc:'Water reaching knee-level along riverside road, still rising.', hoursAgo:2},
-    {id:'s2', loc:'Barangay Malanday, Marikina City', lat:14.6489, lng:121.1077, level:'danger', desc:'Flooding near the market, vehicles unable to pass.', hoursAgo:26},
-    {id:'s3', loc:'Barangay Bagumbayan, Cainta', lat:14.5786, lng:121.1213, level:'watch', desc:'Ankle-deep water on the main road, passable for now.', hoursAgo:5},
-    {id:'s4', loc:'Barangay Pinagbuhatan, Pasig City', lat:14.5636, lng:121.0872, level:'watch', desc:'Water rising slowly near the creek, residents monitoring.', hoursAgo:1},
-    {id:'s5', loc:'Barangay Tumana, Marikina City', lat:14.6402, lng:121.1160, level:'safe', desc:'Water has receded, road is passable again.', hoursAgo:3},
-    {id:'s6', loc:'Barangay Longos, Malabon City', lat:14.6631, lng:120.9569, level:'danger', desc:'Chest-deep water in low-lying streets, residents advised to evacuate.', hoursAgo:30},
-    {id:'s7', loc:'Barangay Commonwealth, Quezon City', lat:14.6969, lng:121.0787, level:'safe', desc:'No flooding observed, roads clear.', hoursAgo:4},
-    {id:'s8', loc:'Barangay San Roque, Marikina City', lat:14.6300, lng:121.0950, level:'safe', desc:'Historical report — area was flood-free during last week, based on monitoring.', hoursAgo:340}
-  ];
+  // ---------- Seed reports (empty — only real submitted reports show now) ----------
+  var SEED_REPORTS = [];
 
   function timeAgoLabel(hoursAgo){
-    if(hoursAgo < 1) return 'Just now';
+    var totalMinutes = hoursAgo * 60;
+    if(totalMinutes < 2) return 'Just now';
+    if(hoursAgo < 1) return Math.round(totalMinutes) + ' minute' + (Math.round(totalMinutes)===1?'':'s') + ' ago';
     if(hoursAgo < 24) return Math.round(hoursAgo) + ' hour' + (Math.round(hoursAgo)===1?'':'s') + ' ago';
     var days = Math.round(hoursAgo/24);
     return days + ' day' + (days===1?'':'s') + ' ago';
@@ -610,10 +603,14 @@
     });
   });
 
-  // ---------- Hero water animation ----------
+  // ---------- Initial load + keep timestamps ticking ----------
   window.addEventListener('DOMContentLoaded', function(){
     updateHeroCard();
     handleNav(window.location.hash.replace('#','') || 'home');
+    setInterval(function(){
+      updateHeroCard();
+      renderMarkers();
+    }, 30000);
   });
 </script>
 
