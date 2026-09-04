@@ -194,18 +194,15 @@
         <p class="hero-note">Free to use. No app download required to view alerts.</p>
       </div>
 
-      <div class="gauge-card" role="img" aria-label="Live flood level gauge showing the most urgent current report">
+      <div class="gauge-card" role="region" aria-label="Recent community flood updates">
         <div class="gauge-head">
-          <span class="place" id="heroPlace">Barangay San Isidro</span>
-          <span class="time" id="heroTime">Updated 4 min ago</span>
+          <span class="place">Recent Updates</span>
+          <span class="time" id="heroTime">Live</span>
         </div>
-        <div class="gauge-bands">
-          <div class="band-row band-safe"><span>Green — Safe</span><span class="tag">Passable</span></div>
-          <div class="band-row band-watch"><span>Yellow — Moderate</span><span class="tag">Caution</span></div>
-          <div class="band-row band-danger"><span>Red — High-risk</span><span class="tag">Avoid area</span></div>
+        <div class="gauge-bands" id="updatesList">
+          <div class="band-row band-safe"><span>Loading recent reports…</span><span class="tag">—</span></div>
         </div>
-        <div class="water-level" aria-hidden="true"><span id="waterFill"></span></div>
-        <p class="gauge-fill-note" id="heroNote">Water level rising near Purok 3 — checked against PAGASA data</p>
+        <p class="gauge-fill-note" id="heroNote">Community reports checked against weather and location data.</p>
       </div>
     </div>
   </section>
@@ -426,29 +423,42 @@
       });
   }
 
-  // ---------- Hero card: reflects the most urgent current report ----------
-  var LEVEL_RANK = {danger:2, watch:1, safe:0};
-  var LEVEL_FILL = {danger:'92%', watch:'58%', safe:'18%'};
+  // ---------- Recent updates feed on the homepage ----------
+  function getAgeMs(r){
+    if(r.createdAt && typeof r.createdAt.toMillis === 'function'){
+      return Date.now() - r.createdAt.toMillis();
+    }
+    if(typeof r.hoursAgo === 'number'){
+      return r.hoursAgo * 3600000;
+    }
+    return 0;
+  }
+  var LEVEL_LABEL_HOME = {danger:'High-risk', watch:'Moderate', safe:'Safe'};
+
   function updateHeroCard(){
-    var placeEl = document.getElementById('heroPlace');
+    var listEl = document.getElementById('updatesList');
     var timeEl = document.getElementById('heroTime');
     var noteEl = document.getElementById('heroNote');
-    var fillEl = document.getElementById('waterFill');
-    if(!placeEl) return;
+    if(!listEl) return;
 
     var all = SEED_REPORTS.concat(liveReports);
     if(all.length === 0) return;
 
-    var top = all.reduce(function(best, r){
-      if(!best) return r;
-      if(LEVEL_RANK[r.level] !== LEVEL_RANK[best.level]) return LEVEL_RANK[r.level] > LEVEL_RANK[best.level] ? r : best;
-      return (r.hoursAgo < best.hoursAgo) ? r : best;
-    }, null);
+    var sorted = all.slice().sort(function(a, b){ return getAgeMs(a) - getAgeMs(b); });
+    var recent = sorted.slice(0, 5);
 
-    placeEl.textContent = top.loc;
-    timeEl.textContent = 'Updated ' + timeAgoLabel(top.hoursAgo);
-    noteEl.textContent = top.desc;
-    if(fillEl) fillEl.style.width = LEVEL_FILL[top.level];
+    listEl.innerHTML = '';
+    recent.forEach(function(r){
+      var hoursAgo = getAgeMs(r) / 3600000;
+      var row = document.createElement('div');
+      row.className = 'band-row band-' + r.level;
+      row.innerHTML = '<span>' + r.loc + '</span><span class="tag">' +
+        LEVEL_LABEL_HOME[r.level] + ' · ' + timeAgoLabel(hoursAgo) + '</span>';
+      listEl.appendChild(row);
+    });
+
+    if(timeEl) timeEl.textContent = 'Updated ' + timeAgoLabel(getAgeMs(recent[0]) / 3600000);
+    if(noteEl) noteEl.textContent = recent[0].desc;
   }
 
   var map, markerLayer;
