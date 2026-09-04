@@ -136,6 +136,16 @@
   }
   .field textarea{resize:vertical;min-height:90px;}
   .field-hint{font-size:0.82rem;color:var(--ink-soft);margin-top:6px;}
+  .loc-suggestions{
+    position:absolute; top:100%; left:0; right:0; z-index:20;
+    background:var(--paper); border:1.5px solid var(--line); border-top:none;
+    border-radius:0 0 6px 6px; max-height:220px; overflow-y:auto;
+    box-shadow:0 8px 20px rgba(16,38,43,0.12);
+  }
+  .loc-suggestion{padding:10px 14px; font-size:0.92rem; cursor:pointer;}
+  .loc-suggestion:hover, .loc-suggestion.active{background:rgba(16,38,43,0.06);}
+  .loc-suggestion + .loc-suggestion{border-top:1px solid var(--line);}
+  .loc-suggestion-empty{padding:10px 14px; font-size:0.88rem; color:var(--ink-soft);}
   .severity-options{display:flex;gap:10px;flex-wrap:wrap;}
   .sev-btn{flex:1;min-width:120px;padding:12px;border-radius:6px;border:1.5px solid var(--line);text-align:center;font-weight:600;font-size:0.9rem;cursor:pointer;background:var(--paper);}
   .sev-btn[data-active="true"].sev-safe{border-color:var(--safe);background:rgba(63,122,93,0.12);}
@@ -298,10 +308,11 @@
       <p>Your update could help someone get home safely. This demo saves your report locally in your browser — nothing is sent to a live server.</p>
     </div>
     <form id="reportForm">
-      <div class="field">
+      <div class="field" style="position:relative;">
         <label for="loc">Barangay / location</label>
-        <input type="text" id="loc" placeholder="e.g. Barangay Malanday, Marikina City" required>
-        <p class="field-hint">Type your barangay or nearest landmark.</p>
+        <input type="text" id="loc" placeholder="e.g. Barangay Malanday, Marikina City" autocomplete="off" required>
+        <div id="locSuggestions" class="loc-suggestions" hidden></div>
+        <p class="field-hint">Start typing and pick your location from the list to keep it accurate.</p>
       </div>
       <div class="field">
         <label>Flood level</label>
@@ -398,22 +409,32 @@
     return days + ' day' + (days===1?'':'s') + ' ago';
   }
 
-  // ---------- Geocoding (turns typed location text into real coordinates) ----------
-  // Uses OpenStreetMap's free Nominatim service. Falls back to Metro Manila center if not found.
-  function geocodeLocation(text){
+  // ---------- Geocoding + address parsing (OpenStreetMap's free Nominatim service) ----------
+  function searchPlaces(text){
     var query = encodeURIComponent(text + ', Philippines');
-    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + query;
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=ph&q=' + query;
     return fetch(url, { headers: { 'Accept': 'application/json' } })
       .then(function(res){ return res.json(); })
-      .then(function(results){
-        if(results && results.length > 0){
-          return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon), matched: true };
-        }
-        return { lat: 14.615, lng: 121.06, matched: false };
-      })
-      .catch(function(){
-        return { lat: 14.615, lng: 121.06, matched: false };
-      });
+      .catch(function(){ return []; });
+  }
+
+  // Fine-grained label for the map (barangay/district + city), comma-formatted from real address data.
+  function getDisplayLoc(address, fallbackDisplayName){
+    if(!address) return fallbackDisplayName || null;
+    var fine = address.suburb || address.village || address.neighbourhood || address.quarter || null;
+    var district = address.city_district || address.borough || null;
+    var city = address.city || address.town || address.municipality || null;
+    var parts = [fine || district, city].filter(Boolean);
+    return parts.length ? parts.join(', ') : (fallbackDisplayName || null);
+  }
+
+  // Big-area label for the homepage (district + city, no barangay).
+  function getBroadArea(address, fallbackDisplayName){
+    if(!address) return fallbackDisplayName || null;
+    var district = address.city_district || address.borough || address.district || null;
+    var city = address.city || address.town || address.municipality || address.county || null;
+    if(district && city) return district + ', ' + city;
+    return city || district || fallbackDisplayName || null;
   }
 
   // ---------- Recent updates feed on the homepage ----------
@@ -445,7 +466,7 @@
       var hoursAgo = getAgeMs(r) / 3600000;
       var row = document.createElement('div');
       row.className = 'band-row band-' + r.level;
-      row.innerHTML = '<span>' + r.loc + '</span><span class="tag">' +
+      row.innerHTML = '<span>' + (r.area || r.loc) + '</span><span class="tag">' +
         LEVEL_LABEL_HOME[r.level] + ' · ' + timeAgoLabel(hoursAgo) + '</span>';
       listEl.appendChild(row);
     });
@@ -538,6 +559,61 @@
     });
   });
 
+  // ---------- Location autocomplete ----------
+  var locInput = document.getElementById('loc');
+  var locSuggestions = document.getElementById('locSuggestions');
+  var selectedPlace = null; // {lat, lng, displayLoc, area}
+  var locDebounceTimer = null;
+
+  function hideSuggestions(){
+    locSuggestions.hidden = true;
+    locSuggestions.innerHTML = '';
+  }
+
+  function renderSuggestions(results){
+    locSuggestions.innerHTML = '';
+    if(!results || results.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'loc-suggestion-empty';
+      empty.textContent = 'No matching places found — try a nearby landmark or city.';
+      locSuggestions.appendChild(empty);
+      locSuggestions.hidden = false;
+      return;
+    }
+    results.forEach(function(r){
+      var item = document.createElement('div');
+      item.className = 'loc-suggestion';
+      item.textContent = r.display_name;
+      item.addEventListener('click', function(){
+        var lat = parseFloat(r.lat);
+        var lng = parseFloat(r.lon);
+        var displayLoc = getDisplayLoc(r.address, r.display_name);
+        var area = getBroadArea(r.address, displayLoc);
+        selectedPlace = { lat: lat, lng: lng, displayLoc: displayLoc, area: area };
+        locInput.value = displayLoc;
+        hideSuggestions();
+      });
+      locSuggestions.appendChild(item);
+    });
+    locSuggestions.hidden = false;
+  }
+
+  locInput.addEventListener('input', function(){
+    selectedPlace = null; // typing again invalidates any previous pick
+    var text = locInput.value.trim();
+    clearTimeout(locDebounceTimer);
+    if(text.length < 3){ hideSuggestions(); return; }
+    locDebounceTimer = setTimeout(function(){
+      searchPlaces(text).then(renderSuggestions);
+    }, 350);
+  });
+
+  document.addEventListener('click', function(e){
+    if(!locSuggestions.contains(e.target) && e.target !== locInput){
+      hideSuggestions();
+    }
+  });
+
   var fileDrop = document.getElementById('fileDrop');
   var fileInput = document.getElementById('fileInput');
   fileDrop.addEventListener('click', function(){ fileInput.click(); });
@@ -557,31 +633,48 @@
 
   document.getElementById('reportForm').addEventListener('submit', function(e){
     e.preventDefault();
-    var loc = document.getElementById('loc').value.trim();
+    var typedLoc = document.getElementById('loc').value.trim();
     var desc = document.getElementById('desc').value.trim();
-    if(!loc || !desc) return;
+    if(!typedLoc || !desc) return;
 
     var submitBtn = document.querySelector('#reportForm button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Locating…';
 
-    geocodeLocation(loc).then(function(coords){
+    // Prefer the place they clicked from the dropdown. If they typed but never picked
+    // a suggestion, do a one-off lookup so we still get a clean, correctly-formatted place.
+    var placePromise = selectedPlace
+      ? Promise.resolve(selectedPlace)
+      : searchPlaces(typedLoc).then(function(results){
+          if(results && results.length > 0){
+            var r = results[0];
+            var displayLoc = getDisplayLoc(r.address, r.display_name);
+            var area = getBroadArea(r.address, displayLoc);
+            return { lat: parseFloat(r.lat), lng: parseFloat(r.lon), displayLoc: displayLoc, area: area, matched: true };
+          }
+          return { lat: 14.615, lng: 121.06, displayLoc: typedLoc, area: typedLoc, matched: false };
+        });
+
+    placePromise.then(function(place){
       if(!reportsCollection || !window.__firestoreAddDoc){
         throw new Error('Firebase is not ready yet — please wait a moment and try again.');
       }
       submitBtn.textContent = 'Submitting…';
       return window.__firestoreAddDoc(reportsCollection, {
-        loc: loc,
-        lat: coords.lat,
-        lng: coords.lng,
+        loc: place.displayLoc || typedLoc,
+        area: place.area || place.displayLoc || typedLoc,
+        lat: place.lat,
+        lng: place.lng,
         level: selectedSeverity,
         desc: desc,
         hoursAgo: 0,
         userSubmitted: true,
         createdAt: window.__firestoreServerTimestamp ? window.__firestoreServerTimestamp() : null
-      }).then(function(){ return coords; });
-    }).then(function(coords){
+      }).then(function(){ return place; });
+    }).then(function(place){
       document.getElementById('reportForm').reset();
+      selectedPlace = null;
+      hideSuggestions();
       fileDrop.textContent = 'Tap to attach a photo — preview only in this demo';
       fileDrop.classList.remove('has-file');
       document.querySelectorAll('.sev-btn').forEach(function(b){ b.removeAttribute('data-active'); });
@@ -589,10 +682,10 @@
       selectedSeverity = 'watch';
 
       handleNav('map');
-      if(coords.matched){
-        showToast('Report submitted — now visible to everyone on the live map.');
-      } else {
+      if(place.matched === false){
         showToast('Report submitted, but the location couldn\'t be pinpointed exactly — placed near Metro Manila center.');
+      } else {
+        showToast('Report submitted — now visible to everyone on the live map.');
       }
     }).catch(function(err){
       console.error('Failed to submit report:', err);
