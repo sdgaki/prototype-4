@@ -26,7 +26,7 @@
   [hidden]{display:none !important;}
 
   header{position:sticky;top:0;z-index:50;background:rgba(234,240,236,0.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);}
-  .nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0;}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding-top:18px;padding-bottom:18px;}
   .logo{display:flex;align-items:center;gap:10px;font-family:'Archivo', sans-serif;font-weight:800;font-size:1.15rem;cursor:pointer;}
   .logo .mark{width:26px;height:26px;flex:none;}
   .nav-links{display:none;align-items:center;gap:28px;font-size:0.95rem;font-weight:500;}
@@ -113,7 +113,7 @@
   .footer-links a:hover{color:var(--paper);}
 
   /* ---- Map view ---- */
-  .view-header{padding:36px 0 20px;}
+  .view-header{padding-top:36px;padding-bottom:20px;}
   .view-header h1{font-size:clamp(1.6rem, 3vw, 2.1rem);}
   .view-header p{color:var(--ink-soft);margin-top:10px;max-width:56ch;}
   .map-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px;}
@@ -127,7 +127,7 @@
   .demo-note{margin:16px 0 60px;font-size:0.85rem;color:var(--ink-soft);background:rgba(16,38,43,0.05);border:1px solid var(--line);padding:14px 16px;border-radius:8px;}
 
   /* ---- Report view ---- */
-  .report-wrap{max-width:640px;padding:36px 0 80px;}
+  .report-wrap{max-width:640px;padding-top:36px;padding-bottom:80px;}
   .field{margin-bottom:20px;}
   .field label{display:block;font-weight:600;font-size:0.92rem;margin-bottom:8px;}
   .field input[type="text"], .field select, .field textarea{
@@ -157,6 +157,38 @@
   .lvl-danger{background:rgba(181,67,46,0.16);color:#7A2C1D;}
 
   @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .water-level span{transition:none;} }
+
+  /* ---- waste level, badges, photos, feed ---- */
+  .opt{font-weight:400;color:var(--ink-soft);}
+  .waste-options{display:flex;gap:10px;flex-wrap:wrap;}
+  .waste-btn{flex:1;min-width:110px;padding:12px;border-radius:6px;border:1.5px solid var(--line);text-align:center;font-weight:600;font-size:0.9rem;cursor:pointer;background:var(--paper);color:var(--ink);font-family:inherit;}
+  .waste-btn[data-active="true"].waste-low{border-color:#5B8A8E;background:rgba(91,138,142,0.16);}
+  .waste-btn[data-active="true"].waste-mid{border-color:#9A6B3F;background:rgba(154,107,63,0.18);}
+  .waste-btn[data-active="true"].waste-high{border-color:#6B3F26;background:rgba(107,63,38,0.2);}
+  .badge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:0.78rem;font-weight:600;}
+  .badge-safe{background:rgba(63,122,93,0.15);color:#2B4A3A;}
+  .badge-watch{background:rgba(201,138,44,0.18);color:#5C3D0F;}
+  .badge-danger{background:rgba(181,67,46,0.16);color:#7A2C1D;}
+  .badge-waste-low, .lvl-waste-low{background:rgba(91,138,142,0.18);color:#2F5457;}
+  .badge-waste-mid, .lvl-waste-mid{background:rgba(154,107,63,0.2);color:#5E3F1F;}
+  .badge-waste-high, .lvl-waste-high{background:rgba(107,63,38,0.22);color:#45250F;}
+  .popup-level + .popup-level{margin-left:6px;}
+  .row-sub{display:block;font-size:0.78rem;font-weight:500;opacity:0.85;}
+  .card-link{display:inline-block;margin-top:14px;font-size:0.88rem;font-weight:600;color:var(--paper);text-underline-offset:3px;}
+  .file-drop img{max-height:180px;width:auto;border-radius:6px;margin:0 auto 10px;}
+  .file-remove{margin-top:10px;background:none;border:none;padding:0;font-family:inherit;font-size:0.88rem;font-weight:600;color:var(--danger);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .feed-col{max-width:620px;margin:0 auto;padding-bottom:80px;}
+  .composer{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;margin-bottom:18px;}
+  .composer-text{flex:1;color:var(--ink-soft);font-size:0.95rem;}
+  .avatar{width:40px;height:40px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;flex:none;}
+  .post{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;}
+  .post-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .post-name{font-weight:600;font-size:0.95rem;overflow-wrap:anywhere;}
+  .post-sub{font-size:0.82rem;color:var(--ink-soft);}
+  .post-text{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:12px;}
+  .post-photo{width:100%;max-height:460px;object-fit:cover;border-radius:8px;margin-bottom:12px;background:var(--mist);}
+  .post-badges{display:flex;gap:8px;flex-wrap:wrap;}
+  .feed-empty{text-align:center;color:var(--ink-soft);padding:48px 0;}
 </style>
 </head>
 <body>
@@ -174,6 +206,7 @@
       <a data-nav="home#features">Features</a>
       <a data-nav="home#how">How it works</a>
       <a data-nav="map">Live Map</a>
+      <a href="#feed" data-nav="feed">Feed</a>
       <a data-nav="home#contact">Contact</a>
     </nav>
     <a data-nav="report" class="btn btn-primary nav-cta">Report a Flood</a>
@@ -203,6 +236,7 @@
           <div class="band-row band-safe"><span>No reports yet</span><span class="tag">Be the first to submit one</span></div>
         </div>
         <p class="gauge-fill-note" id="heroNote">Community reports checked against weather and location data.</p>
+        <a href="#feed" data-nav="feed" class="card-link">See all posts</a>
       </div>
     </div>
   </section>
@@ -274,7 +308,7 @@
 <div id="view-map" hidden>
   <div class="wrap view-header">
     <h1>Live Flood Map</h1>
-    <p>Community reports checked against location and weather data. Sample data shown below for demonstration.</p>
+    <p>Reports from residents, color-coded by flood level. Tap a pin to see the details.</p>
   </div>
   <div class="wrap">
     <div class="map-toolbar">
@@ -286,7 +320,24 @@
       <a data-nav="report" class="btn btn-primary">Report a Flood</a>
     </div>
     <div id="map"></div>
-    <p class="demo-note">Prototype note: markers below include sample reports (some recent, some older) so the map isn't empty for a demo. Submitting the report form adds a real new marker on top of this data, saved in your browser.</p>
+  </div>
+</div>
+
+<!-- ================= FEED VIEW ================= -->
+<div id="view-feed" hidden>
+  <div class="wrap view-header">
+    <h1>Community Feed</h1>
+    <p>Flood and trash reports from residents, newest first.</p>
+  </div>
+  <div class="wrap">
+    <div class="feed-col">
+      <a href="#report" data-nav="report" class="composer">
+        <span class="avatar"><svg width="20" height="20" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2C13 2 5 11.5 5 16.5C5 21.19 8.58 24 13 24C17.42 24 21 21.19 21 16.5C21 11.5 13 2 13 2Z" stroke="#F7F9F7" stroke-width="2"/></svg></span>
+        <span class="composer-text">What's the flood and trash situation near you?</span>
+        <span class="btn btn-primary">Report</span>
+      </a>
+      <div id="feedList"><p class="feed-empty">No posts yet. Be the first to report.</p></div>
+    </div>
   </div>
 </div>
 
@@ -295,7 +346,7 @@
   <div class="wrap report-wrap">
     <div class="view-header" style="padding-top:0;">
       <h1>Report a Flood</h1>
-      <p>Your update could help someone get home safely. This demo saves your report locally in your browser — nothing is sent to a live server.</p>
+      <p>Your update could help someone get home safely. Reports and photos are shared publicly on the live map and feed.</p>
     </div>
     <form id="reportForm">
       <div class="field">
@@ -312,13 +363,24 @@
         </div>
       </div>
       <div class="field">
+        <label>Trash in the water <span class="opt">(optional)</span></label>
+        <div class="waste-options" id="wasteOptions">
+          <button type="button" class="waste-btn waste-low" data-value="low" aria-pressed="false">Little or none</button>
+          <button type="button" class="waste-btn waste-mid" data-value="mid" aria-pressed="false">Some</button>
+          <button type="button" class="waste-btn waste-high" data-value="high" aria-pressed="false">Heavy</button>
+        </div>
+        <p class="field-hint">How much trash is floating or piled up near you? Tap again to clear.</p>
+      </div>
+      <div class="field">
         <label for="desc">What are you seeing?</label>
         <textarea id="desc" placeholder="e.g. Knee-deep water along the main road, still rising." required></textarea>
       </div>
       <div class="field">
         <label>Photo (optional)</label>
-        <div class="file-drop" id="fileDrop">Tap to attach a photo — preview only in this demo</div>
+        <div class="file-drop" id="fileDrop" role="button" tabindex="0">Tap to attach a photo</div>
+        <button type="button" class="file-remove" id="photoRemove" hidden>Remove photo</button>
         <input type="file" id="fileInput" accept="image/*" style="display:none;">
+        <p class="field-hint">Photos are resized and shared publicly with your report.</p>
       </div>
       <div class="hero-actions">
         <button type="submit" class="btn btn-primary">Submit report</button>
@@ -377,6 +439,7 @@
         liveReports = snapshot.docs.map(function(doc){ return doc.data(); });
         renderMarkers();
         updateHeroCard();
+        renderFeed();
       }, function(err){
         console.error("Firestore listen failed:", err);
       });
@@ -437,6 +500,16 @@
     return 0;
   }
   var LEVEL_LABEL_HOME = {danger:'High-risk', watch:'Moderate', safe:'Safe'};
+  var WASTE_LABEL = {low:'Little or no trash', mid:'Some trash', high:'Heavy trash'};
+  var DROP_ICON = '<svg width="20" height="20" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2C13 2 5 11.5 5 16.5C5 21.19 8.58 24 13 24C17.42 24 21 21.19 21 16.5C21 11.5 13 2 13 2Z" stroke="#F7F9F7" stroke-width="2"/></svg>';
+  function normLevel(l){ return (l === 'safe' || l === 'watch' || l === 'danger') ? l : 'watch'; }
+  function wasteOk(w){ return w === 'low' || w === 'mid' || w === 'high'; }
+  // Reports are typed by the public, so anything put into HTML strings gets escaped first.
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
 
   function updateHeroCard(){
     var listEl = document.getElementById('updatesList');
@@ -454,14 +527,99 @@
     recent.forEach(function(r){
       var hoursAgo = getAgeMs(r) / 3600000;
       var row = document.createElement('div');
-      row.className = 'band-row band-' + r.level;
-      row.innerHTML = '<span>' + (r.area || r.loc) + '</span><span class="tag">' +
-        LEVEL_LABEL_HOME[r.level] + ' · ' + timeAgoLabel(hoursAgo) + '</span>';
+      var lv = normLevel(r.level);
+      row.className = 'band-row band-' + lv;
+      var wasteLine = wasteOk(r.waste) ? '<small class="row-sub">' + esc(WASTE_LABEL[r.waste]) + '</small>' : '';
+      row.innerHTML = '<span>' + esc(r.area || r.loc) + wasteLine + '</span><span class="tag">' +
+        esc(LEVEL_LABEL_HOME[lv]) + ' · ' + timeAgoLabel(hoursAgo) + '</span>';
       listEl.appendChild(row);
     });
 
     if(timeEl) timeEl.textContent = 'Updated ' + timeAgoLabel(getAgeMs(recent[0]) / 3600000);
     if(noteEl) noteEl.textContent = recent[0].desc;
+  }
+
+  // ---------- Community feed ----------
+  function isSafePhoto(src){ return typeof src === 'string' && src.indexOf('data:image/') === 0; }
+
+  function renderFeed(){
+    var listEl = document.getElementById('feedList');
+    if(!listEl) return;
+    listEl.innerHTML = '';
+    var all = SEED_REPORTS.concat(liveReports);
+    if(all.length === 0){
+      var empty = document.createElement('p');
+      empty.className = 'feed-empty';
+      empty.textContent = 'No posts yet. Be the first to report.';
+      listEl.appendChild(empty);
+      return;
+    }
+    var sorted = all.slice().sort(function(a, b){ return getAgeMs(a) - getAgeMs(b); }).slice(0, 50);
+    sorted.forEach(function(r){
+      var lv = normLevel(r.level);
+      var post = document.createElement('article');
+      post.className = 'post';
+
+      var head = document.createElement('div');
+      head.className = 'post-head';
+      var avatar = document.createElement('span');
+      avatar.className = 'avatar';
+      avatar.innerHTML = DROP_ICON;
+      var who = document.createElement('div');
+      var name = document.createElement('div');
+      name.className = 'post-name';
+      name.textContent = r.loc || 'Unknown location';
+      var sub = document.createElement('div');
+      sub.className = 'post-sub';
+      var age = document.createElement('span');
+      age.className = 'js-age';
+      age.setAttribute('data-created', String(Date.now() - getAgeMs(r)));
+      age.textContent = timeAgoLabel(getAgeMs(r) / 3600000);
+      sub.appendChild(document.createTextNode('Anonymous resident · '));
+      sub.appendChild(age);
+      who.appendChild(name);
+      who.appendChild(sub);
+      head.appendChild(avatar);
+      head.appendChild(who);
+      post.appendChild(head);
+
+      if(r.desc){
+        var text = document.createElement('p');
+        text.className = 'post-text';
+        text.textContent = r.desc;
+        post.appendChild(text);
+      }
+      if(isSafePhoto(r.photo)){
+        var img = document.createElement('img');
+        img.className = 'post-photo';
+        img.loading = 'lazy';
+        img.alt = 'Photo posted with the report from ' + (r.loc || 'this location');
+        img.src = r.photo;
+        post.appendChild(img);
+      }
+      var badges = document.createElement('div');
+      badges.className = 'post-badges';
+      var flood = document.createElement('span');
+      flood.className = 'badge badge-' + lv;
+      flood.textContent = 'Flood: ' + LEVEL_LABEL_HOME[lv];
+      badges.appendChild(flood);
+      if(wasteOk(r.waste)){
+        var waste = document.createElement('span');
+        waste.className = 'badge badge-waste-' + r.waste;
+        waste.textContent = WASTE_LABEL[r.waste];
+        badges.appendChild(waste);
+      }
+      post.appendChild(badges);
+      listEl.appendChild(post);
+    });
+  }
+
+  // Keeps "5 minutes ago" style labels ticking without rebuilding the whole feed.
+  function refreshFeedTimes(){
+    document.querySelectorAll('#feedList .js-age').forEach(function(el){
+      var created = parseInt(el.getAttribute('data-created'), 10);
+      if(!isNaN(created)) el.textContent = timeAgoLabel((Date.now() - created) / 3600000);
+    });
   }
 
   var map, markerLayer;
@@ -484,30 +642,34 @@
     markerLayer.clearLayers();
     var all = SEED_REPORTS.concat(liveReports);
     all.forEach(function(r){
+      if(typeof r.lat !== 'number' || typeof r.lng !== 'number') return;
+      var lv = normLevel(r.level);
       var marker = L.circleMarker([r.lat, r.lng], {
         radius: 9,
-        color: LEVEL_COLOR[r.level],
-        fillColor: LEVEL_COLOR[r.level],
+        color: LEVEL_COLOR[lv],
+        fillColor: LEVEL_COLOR[lv],
         fillOpacity: 0.85,
         weight: 2
       });
-      var popup = '<div class="popup-title">' + r.loc + '</div>' +
-        '<div class="popup-level lvl-' + r.level + '">' + LEVEL_LABEL[r.level] + '</div>' +
-        '<div class="popup-meta">' + (r.userSubmitted ? 'Submitted just now (this session)' : timeAgoLabel(r.hoursAgo)) + '</div>' +
-        '<div>' + r.desc + '</div>';
+      var wastePart = wasteOk(r.waste) ? '<div class="popup-level lvl-waste-' + r.waste + '">' + esc(WASTE_LABEL[r.waste]) + '</div>' : '';
+      var popup = '<div class="popup-title">' + esc(r.loc) + '</div>' +
+        '<div class="popup-level lvl-' + lv + '">' + esc(LEVEL_LABEL[lv]) + '</div>' + wastePart +
+        '<div class="popup-meta">' + timeAgoLabel(getAgeMs(r) / 3600000) + '</div>' +
+        '<div>' + esc(r.desc) + '</div>';
       marker.bindPopup(popup);
       markerLayer.addLayer(marker);
     });
   }
 
   // ---------- View routing ----------
-  var views = {home:'view-home', map:'view-map', report:'view-report'};
+  var views = {home:'view-home', map:'view-map', feed:'view-feed', report:'view-report'};
   function showView(name, scrollTargetId){
     Object.keys(views).forEach(function(key){
       document.getElementById(views[key]).hidden = (key !== name);
     });
     document.querySelectorAll('.nav-links a').forEach(function(a){ a.classList.remove('active'); });
     if(name === 'map') initMap();
+    if(name === 'feed') renderFeed();
     window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
     if(scrollTargetId){
       setTimeout(function(){
@@ -548,14 +710,113 @@
     });
   });
 
+  // ---------- Trash level ----------
+  var selectedWaste = null;
+  document.querySelectorAll('.waste-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var wasActive = btn.getAttribute('data-active') === 'true';
+      document.querySelectorAll('.waste-btn').forEach(function(b){
+        b.removeAttribute('data-active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      if(wasActive){
+        selectedWaste = null;
+      } else {
+        btn.setAttribute('data-active', 'true');
+        btn.setAttribute('aria-pressed', 'true');
+        selectedWaste = btn.getAttribute('data-value');
+      }
+    });
+  });
+
+  // ---------- Photo attach (resized in the browser, saved with the report) ----------
   var fileDrop = document.getElementById('fileDrop');
   var fileInput = document.getElementById('fileInput');
-  fileDrop.addEventListener('click', function(){ fileInput.click(); });
-  fileInput.addEventListener('change', function(){
-    if(fileInput.files && fileInput.files[0]){
-      fileDrop.textContent = 'Attached: ' + fileInput.files[0].name + ' (preview only in this demo)';
-      fileDrop.classList.add('has-file');
+  var photoRemove = document.getElementById('photoRemove');
+  var photoData = null;
+
+  function resizeImage(file, maxDim, quality){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onerror = function(){ reject(new Error('Could not read that photo.')); };
+      reader.onload = function(){
+        var img = new Image();
+        img.onerror = function(){ reject(new Error('That file could not be opened as an image.')); };
+        img.onload = function(){
+          var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function preparePhoto(file){
+    return resizeImage(file, 720, 0.7).then(function(url){
+      if(url.length <= 600000) return url;
+      return resizeImage(file, 520, 0.55);
+    }).then(function(url){
+      if(url.length > 900000) throw new Error('That photo is too large. Please pick a smaller one.');
+      return url;
+    });
+  }
+
+  function showPhotoPreview(){
+    fileDrop.innerHTML = '';
+    if(!photoData){
+      fileDrop.textContent = 'Tap to attach a photo';
+      fileDrop.classList.remove('has-file');
+      photoRemove.hidden = true;
+      return;
     }
+    var img = document.createElement('img');
+    img.src = photoData;
+    img.alt = 'Preview of the photo you selected';
+    var msg = document.createElement('div');
+    msg.textContent = 'Tap to change photo';
+    fileDrop.appendChild(img);
+    fileDrop.appendChild(msg);
+    fileDrop.classList.add('has-file');
+    photoRemove.hidden = false;
+  }
+
+  fileDrop.addEventListener('click', function(){ fileInput.click(); });
+  fileDrop.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+  });
+  photoRemove.addEventListener('click', function(){
+    photoData = null;
+    fileInput.value = '';
+    showPhotoPreview();
+  });
+  fileInput.addEventListener('change', function(){
+    var file = fileInput.files && fileInput.files[0];
+    if(!file) return;
+    if(file.type && file.type.indexOf('image/') !== 0){
+      fileInput.value = '';
+      showToast('Please choose an image file.');
+      return;
+    }
+    fileDrop.textContent = 'Processing photo…';
+    preparePhoto(file).then(function(url){
+      photoData = url;
+      showPhotoPreview();
+    }).catch(function(err){
+      photoData = null;
+      fileInput.value = '';
+      showPhotoPreview();
+      showToast(err.message || 'Could not use that photo.');
+    });
   });
 
   function showToast(msg){
@@ -574,6 +835,8 @@
     var submitBtn = document.querySelector('#reportForm button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Locating…';
+    var wasteAtSubmit = selectedWaste;
+    var photoAtSubmit = photoData;
 
     // Look up what they typed to get real coordinates and a clean, correctly-formatted place name.
     var placePromise = searchPlaces(typedLoc).then(function(results){
@@ -591,21 +854,30 @@
         throw new Error('Firebase is not ready yet — please wait a moment and try again.');
       }
       submitBtn.textContent = 'Submitting…';
-      return window.__firestoreAddDoc(reportsCollection, {
+      var newReport = {
         loc: place.displayLoc || typedLoc,
         area: place.area || place.displayLoc || typedLoc,
         lat: place.lat,
         lng: place.lng,
         level: selectedSeverity,
+        waste: wasteAtSubmit,
         desc: desc,
         hoursAgo: 0,
         userSubmitted: true,
         createdAt: window.__firestoreServerTimestamp ? window.__firestoreServerTimestamp() : null
-      }).then(function(){ return place; });
+      };
+      if(photoAtSubmit) newReport.photo = photoAtSubmit;
+      return window.__firestoreAddDoc(reportsCollection, newReport).then(function(){ return place; });
     }).then(function(place){
       document.getElementById('reportForm').reset();
-      fileDrop.textContent = 'Tap to attach a photo — preview only in this demo';
-      fileDrop.classList.remove('has-file');
+      photoData = null;
+      fileInput.value = '';
+      showPhotoPreview();
+      selectedWaste = null;
+      document.querySelectorAll('.waste-btn').forEach(function(b){
+        b.removeAttribute('data-active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       document.querySelectorAll('.sev-btn').forEach(function(b){ b.removeAttribute('data-active'); });
       document.querySelector('.sev-btn[data-value="watch"]').setAttribute('data-active','true');
       selectedSeverity = 'watch';
@@ -614,7 +886,7 @@
       if(place.matched === false){
         showToast('Report submitted, but the location couldn\'t be pinpointed exactly — placed near Metro Manila center.');
       } else {
-        showToast('Report submitted — now visible to everyone on the live map.');
+        showToast('Report submitted — now visible to everyone on the live map and feed.');
       }
     }).catch(function(err){
       console.error('Failed to submit report:', err);
@@ -632,6 +904,7 @@
     setInterval(function(){
       updateHeroCard();
       renderMarkers();
+      refreshFeedTimes();
     }, 30000);
   });
 </script>
